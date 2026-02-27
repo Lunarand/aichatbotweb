@@ -38,11 +38,10 @@ jobs:
           sleep 15 
           
           # Verify the server is responding before proceeding
-          curl -s http://127.0.0.1:8000/static/index.html > /dev/null && echo "Server is up!" || echo "Server failed to start."
+          curl -s http://127.0.0.1:8000/ > /dev/null && echo "Server is up!" || echo "Server failed to start."
 
       - name: Start Cloudflare Tunnel
         run: |
           echo "Starting Cloudflare tunnel..."
           # Run the tunnel in the foreground to keep the GitHub Action alive
-          # The public URL will be printed in the GitHub Actions console output
           cloudflared tunnel --url http://127.0.0.1:8000
