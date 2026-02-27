@@ -21,7 +21,7 @@ jobs:
 
       - name: Download Qwen 2.5 3B Uncensored GGUF
         run: |
-          wget -q --show-progress -O model.gguf https://huggingface.co/mradermacher/Qwen2.5-3B-Instruct-uncensored-GGUF/resolve/main/Qwen2.5-3B-Instruct-uncensored.Q4_K_M.gguf
+          wget -q --show-progress -O model.gguf https://huggingface.co/mradermacher/Qwen2.5-3B-Instruct-abliterated-GGUF/resolve/main/Qwen2.5-3B-Instruct-abliterated.Q4_K_M.gguf
           echo "3B Model downloaded."
 
       - name: Install Cloudflared
