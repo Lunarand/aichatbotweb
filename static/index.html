@@ -4,21 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Uncensored AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root { --bg: #121212; --surface: #1e1e1e; --primary: #00ffcc; --text: #e0e0e0; }
         * { box-sizing: border-box; }
         
-        /* 100dvh fixes the mobile browser address bar covering the input field */
         body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
         
         #header { padding: 1rem; background: var(--surface); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        #header-title { font-weight: bold; }
+        #header-title { font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        #status { font-size: 0.8rem; color: #888; }
         
-        /* Language Dropdown styling */
         select { background: var(--bg); color: var(--text); border: 1px solid #333; padding: 0.4rem; border-radius: 0.3rem; outline: none; }
         
         #chat-container { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; scroll-behavior: smooth; }
-        .message { max-width: 85%; padding: 0.85rem 1rem; border-radius: 1rem; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap; }
+        
+        .message { max-width: 85%; padding: 0.85rem 1rem; border-radius: 1rem; line-height: 1.5; word-wrap: break-word; }
+        .message p { margin: 0 0 0.5rem 0; }
+        .message p:last-child { margin: 0; }
+        .message pre { background: #000; padding: 0.5rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; }
+        .message code { background: #000; padding: 0.2rem 0.4rem; border-radius: 0.3rem; font-family: monospace; }
+        
         .user { background: var(--surface); border: 1px solid #333; align-self: flex-end; border-bottom-right-radius: 0.2rem; }
         .bot { background: #2a2a2a; border-left: 3px solid var(--primary); align-self: flex-start; border-bottom-left-radius: 0.2rem; }
         
@@ -31,7 +37,7 @@
 </head>
 <body>
     <div id="header">
-        <div id="header-title">Uncensored LLM</div>
+        <div id="header-title">Qwen 2.5 <span id="status">Ready</span></div>
         <select id="lang-select">
             <option value="english">English</option>
             <option value="hindi">Hinglish</option>
@@ -50,14 +56,18 @@
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
         const langSelect = document.getElementById('lang-select');
+        const status = document.getElementById('status');
         
-        // This array is the AI's memory
         let chatHistory = [];
 
-        function appendMessage(sender, text) {
+        function appendMessage(sender, text, isHtml = false) {
             const div = document.createElement('div');
             div.className = `message ${sender}`;
-            div.textContent = text;
+            if (isHtml) {
+                div.innerHTML = text;
+            } else {
+                div.textContent = text;
+            }
             chatContainer.appendChild(div);
             chatContainer.scrollTop = chatContainer.scrollHeight;
             return div;
@@ -67,12 +77,13 @@
             const text = userInput.value.trim();
             if (!text) return;
             
-            // Add user message to UI and to memory array
             appendMessage('user', text);
             chatHistory.push({ role: "user", content: text });
             
             userInput.value = '';
             sendBtn.disabled = true;
+            status.textContent = "(Searching/Thinking...)";
+            status.style.color = "var(--primary)";
 
             const botBubble = appendMessage('bot', '');
             let fullBotResponse = "";
@@ -81,7 +92,6 @@
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // Send the entire memory array and the chosen language
                     body: JSON.stringify({ 
                         messages: chatHistory,
                         language: langSelect.value 
@@ -90,6 +100,7 @@
 
                 if (!response.ok) throw new Error('Network response was not ok');
 
+                status.textContent = "(Typing...)";
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
 
@@ -98,18 +109,22 @@
                     if (done) break;
                     
                     const chunk = decoder.decode(value, { stream: true });
-                    botBubble.textContent += chunk;
-                    fullBotResponse += chunk; // Build the final string for memory
+                    fullBotResponse += chunk; 
+                    
+                    // Parse the Markdown into HTML in real-time
+                    botBubble.innerHTML = marked.parse(fullBotResponse);
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
                 
-                // Save the AI's final answer to the memory array
                 chatHistory.push({ role: "assistant", content: fullBotResponse });
 
             } catch (err) {
-                botBubble.textContent = "[Connection Error]";
+                botBubble.textContent = "[Connection Error: Check Server]";
             }
+            
             sendBtn.disabled = false;
+            status.textContent = "Ready";
+            status.style.color = "#888";
             userInput.focus();
         }
 
