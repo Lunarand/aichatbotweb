@@ -19,9 +19,9 @@ jobs:
       - name: Install Python Dependencies
         run: pip install -r requirements.txt
 
-      - name: Download TinyLlama GGUF (Cached via wget)
+      - name: Download TinyLlama Chat GGUF (Cached via wget)
         run: |
-          wget -q --show-progress https://huggingface.co/TheBloke/TinyLlama-1.1B-intermediate-step-1431k-3T-GGUF/resolve/main/tinyllama-1.1b-intermediate-step-1431k-3t.Q4_K_M.gguf
+          wget -q --show-progress https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
           echo "Model downloaded."
 
       - name: Install Cloudflared
