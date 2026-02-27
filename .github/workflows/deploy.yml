@@ -31,11 +31,22 @@ jobs:
 
       - name: Boot FastAPI Backend
         run: |
+          echo "Starting Uvicorn server..."
+          # Start Uvicorn in the background on port 8000
           nohup uvicorn main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
-          sleep 15 
+          
+          echo "Waiting 30 seconds for Qwen 2.5 to load into RAM..."
+          sleep 30 
+          
+          echo "--- SERVER LOGS ---"
+          cat server.log
+          echo "-------------------"
+          
+          # Verify the server is responding before proceeding
           curl -s http://127.0.0.1:8000/ > /dev/null && echo "Server is up!" || echo "Server failed to start."
 
       - name: Start Cloudflare Tunnel
         run: |
           echo "Starting Cloudflare tunnel..."
+          # Run the tunnel in the foreground to keep the GitHub Action alive
           cloudflared tunnel --url http://127.0.0.1:8000
