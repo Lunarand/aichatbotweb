@@ -19,9 +19,9 @@ jobs:
       - name: Install Python Dependencies
         run: pip install -r requirements.txt
 
-      - name: Download TinyLlama Chat GGUF (Cached via wget)
+      - name: Download Qwen 2.5 Uncensored GGUF
         run: |
-          wget -q --show-progress https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
+          wget -q --show-progress -O model.gguf https://huggingface.co/mradermacher/Qwen2.5-1.5B-Instruct-uncensored-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-uncensored.Q4_K_M.gguf
           echo "Model downloaded."
 
       - name: Install Cloudflared
@@ -31,17 +31,11 @@ jobs:
 
       - name: Boot FastAPI Backend
         run: |
-          # Start Uvicorn in the background on port 8000
           nohup uvicorn main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
-          
-          # Wait a few seconds for FastAPI and Llama.cpp to initialize
           sleep 15 
-          
-          # Verify the server is responding before proceeding
           curl -s http://127.0.0.1:8000/ > /dev/null && echo "Server is up!" || echo "Server failed to start."
 
       - name: Start Cloudflare Tunnel
         run: |
           echo "Starting Cloudflare tunnel..."
-          # Run the tunnel in the foreground to keep the GitHub Action alive
           cloudflared tunnel --url http://127.0.0.1:8000
