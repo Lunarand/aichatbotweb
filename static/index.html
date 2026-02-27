@@ -37,7 +37,7 @@
 </head>
 <body>
     <div id="header">
-        <div id="header-title">Qwen 2.5 <span id="status">Ready</span></div>
+        <div id="header-title">Qwen 3B <span id="status">Ready</span></div>
         <select id="lang-select">
             <option value="english">English</option>
             <option value="hindi">Hinglish</option>
@@ -111,7 +111,6 @@
                     const chunk = decoder.decode(value, { stream: true });
                     fullBotResponse += chunk; 
                     
-                    // Parse the Markdown into HTML in real-time
                     botBubble.innerHTML = marked.parse(fullBotResponse);
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
