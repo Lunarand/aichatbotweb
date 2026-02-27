@@ -1,0 +1,48 @@
+name: Run LLM via Cloudflare Tunnel
+
+on: 
+  workflow_dispatch: 
+
+jobs:
+  serve-llm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download TinyLlama GGUF (Cached via wget)
+        run: |
+          wget -q --show-progress https://huggingface.co/TheBloke/TinyLlama-1.1B-intermediate-step-1431k-3T-GGUF/resolve/main/tinyllama-1.1b-intermediate-step-1431k-3t.Q4_K_M.gguf
+          echo "Model downloaded."
+
+      - name: Install Cloudflared
+        run: |
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
+
+      - name: Boot FastAPI Backend
+        run: |
+          # Start Uvicorn in the background on port 8000
+          nohup uvicorn main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
+          
+          # Wait a few seconds for FastAPI and Llama.cpp to initialize
+          sleep 15 
+          
+          # Verify the server is responding before proceeding
+          curl -s http://127.0.0.1:8000/static/index.html > /dev/null && echo "Server is up!" || echo "Server failed to start."
+
+      - name: Start Cloudflare Tunnel
+        run: |
+          echo "Starting Cloudflare tunnel..."
+          # Run the tunnel in the foreground to keep the GitHub Action alive
+          # The public URL will be printed in the GitHub Actions console output
+          cloudflared tunnel --url http://127.0.0.1:8000
