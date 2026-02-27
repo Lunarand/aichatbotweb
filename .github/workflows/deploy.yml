@@ -19,10 +19,10 @@ jobs:
       - name: Install Python Dependencies
         run: pip install -r requirements.txt
 
-      - name: Download Qwen 2.5 Uncensored GGUF
+      - name: Download Qwen 2.5 3B Uncensored GGUF
         run: |
-          wget -q --show-progress -O model.gguf https://huggingface.co/mradermacher/Qwen2.5-1.5B-Instruct-uncensored-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-uncensored.Q4_K_M.gguf
-          echo "Model downloaded."
+          wget -q --show-progress -O model.gguf https://huggingface.co/mradermacher/Qwen2.5-3B-Instruct-uncensored-GGUF/resolve/main/Qwen2.5-3B-Instruct-uncensored.Q4_K_M.gguf
+          echo "3B Model downloaded."
 
       - name: Install Cloudflared
         run: |
@@ -32,21 +32,18 @@ jobs:
       - name: Boot FastAPI Backend
         run: |
           echo "Starting Uvicorn server..."
-          # Start Uvicorn in the background on port 8000
           nohup uvicorn main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
           
-          echo "Waiting 30 seconds for Qwen 2.5 to load into RAM..."
-          sleep 30 
+          echo "Waiting 45 seconds for 3B model to load into RAM..."
+          sleep 45 
           
           echo "--- SERVER LOGS ---"
           cat server.log
           echo "-------------------"
           
-          # Verify the server is responding before proceeding
           curl -s http://127.0.0.1:8000/ > /dev/null && echo "Server is up!" || echo "Server failed to start."
 
       - name: Start Cloudflare Tunnel
         run: |
           echo "Starting Cloudflare tunnel..."
-          # Run the tunnel in the foreground to keep the GitHub Action alive
           cloudflared tunnel --url http://127.0.0.1:8000
